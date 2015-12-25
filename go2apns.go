@@ -11,6 +11,6 @@ import (
 func main() {
 	fmt.Print("Hello world!\n")
 
-	server = &server.Server{}
+	server := &server.Server{}
 	server.Run(os.Args[1:])
 }
