@@ -1,16 +1,17 @@
 // Package server provides Go2apns entry point
-package server
+package main
 
 import (
 	"fmt"
 	"os"
 
+	"github.com/hlouis/go2apns"
 	"github.com/hlouis/go2apns/writer"
 )
 
 const version = "0.1.0"
 
-type Server struct {
+type server struct {
 }
 
 func myPanic(err error) {
@@ -20,16 +21,27 @@ func myPanic(err error) {
 	}
 }
 
-func (srv *Server) Run(args []string) {
+func (srv *server) run(args []string) {
 	// TODO: only test code here
 	writer := &writer.Writer{
-		ApnsEnv: writer.DEVELOPMENT_ENV,
+		ApnsEnv:     writer.DEVELOPMENT_ENV,
+		KeyPairPath: "test/push",
 	}
-	err := writer.Connect()
-	defer writer.Close()
-	myPanic(err)
 
-	err = writer.Ping("my ping")
+	err := writer.Write(go2apns.Notification{})
 	myPanic(err)
-	fmt.Fprintf(os.Stdout, "\n")
+	//err := writer.Connect()
+	//defer writer.Close()
+	//myPanic(err)
+
+	//err = writer.Ping("my ping")
+	//myPanic(err)
+	//fmt.Fprintf(os.Stdout, "\n")
+}
+
+func main() {
+	fmt.Print("Hello world!\n")
+
+	srv := &server{}
+	srv.run(os.Args[1:])
 }

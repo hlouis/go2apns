@@ -1,16 +1,12 @@
 // Package main provides whole program entry point
-package main
+package go2apns
 
-import (
-	"fmt"
-	"os"
-
-	"github.com/hlouis/go2apns/server"
-)
-
-func main() {
-	fmt.Print("Hello world!\n")
-
-	server := &server.Server{}
-	server.Run(os.Args[1:])
+// Notification define the data structure for one
+// notification
+type Notification struct {
+	Token      string // device token for this apn
+	Id         string // apn-id
+	Expiration int    // apn-expiration
+	Priority   int    // apn-priority
+	Alert      string // alert text conetent
 }
