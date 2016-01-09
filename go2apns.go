@@ -8,5 +8,8 @@ type Notification struct {
 	Id         string // apn-id
 	Expiration int    // apn-expiration
 	Priority   int    // apn-priority
+	BundleID   string // bundle id like com.xxx.app.haha
 	Alert      string // alert text conetent
+
+	Result chan string // push result channel
 }

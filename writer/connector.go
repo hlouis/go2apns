@@ -68,6 +68,7 @@ func connect(host string, certPath string, keyPath string) (con *connection, err
 	if err := con.framer.WriteSettings(); err != nil {
 		return nil, err
 	}
+	go readFrames(con.framer)
 	return con, nil
 }
 

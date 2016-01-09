@@ -36,7 +36,7 @@ type Writer struct {
 }
 
 // Write push notification to APNS
-func (w *Writer) Write(n go2apns.Notification) error {
+func (w *Writer) Write(n *go2apns.Notification, out chan string) error {
 	if w.conn == nil {
 		con, err := connect(hosts[w.ApnsEnv], "test/push.crt.pem", "test/push.key.pem")
 		if err != nil {
@@ -73,7 +73,7 @@ func (w *Writer) Write(n go2apns.Notification) error {
 		return fmt.Errorf("Write data error: %v", e)
 	}
 
-	return readFrames(w.conn.framer)
+	return nil
 }
 
 // // ////////////////////
