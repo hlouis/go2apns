@@ -5,7 +5,6 @@ import (
 	"crypto/tls"
 	"fmt"
 	"io"
-	"log"
 	"net"
 
 	"golang.org/x/net/http2"
@@ -68,7 +67,6 @@ func connect(host string, certPath string, keyPath string) (con *connection, err
 	if err := con.framer.WriteSettings(); err != nil {
 		return nil, err
 	}
-	go readFrames(con.framer)
 	return con, nil
 }
 
@@ -88,7 +86,7 @@ func (con *connection) ping(str string) error {
 		return err
 	}
 
-	return readFrame(con.framer)
+	return nil
 }
 
 func (con *connection) openStream(header http2.HeadersFrameParam) (s *stream, err error) {
@@ -110,43 +108,3 @@ func (con *connection) openStream(header http2.HeadersFrameParam) (s *stream, er
 // // //////////////////
 //   Helper methods  //
 // ////////////////////
-
-func readFrames(fr *http2.Framer) error {
-	fmt.Print("Start to read frames to dead!\n")
-	for {
-		err := readFrame(fr)
-		if err != nil {
-			return err
-		}
-	}
-	return nil
-}
-
-func readFrame(fr *http2.Framer) error {
-	f, err := fr.ReadFrame()
-	if err != nil {
-		return fmt.Errorf("ReadFrame: %v", err)
-	}
-	log.Printf("%v", f)
-	switch f := f.(type) {
-	case *http2.PingFrame:
-		log.Printf("  Data = %q", f.Data)
-	case *http2.SettingsFrame:
-		f.ForeachSetting(func(s http2.Setting) error {
-			log.Printf("  %v", s)
-			return nil
-		})
-	case *http2.WindowUpdateFrame:
-		log.Printf("  Window-Increment = %v\n", f.Increment)
-	case *http2.GoAwayFrame:
-		log.Printf("  Last-Stream-ID = %d; Error-Code = %v (%d)\n", f.LastStreamID, f.ErrCode, f.ErrCode)
-	case *http2.DataFrame:
-		log.Printf("  %q", f.Data())
-	case *http2.HeadersFrame:
-		if f.HasPriority() {
-			log.Printf("  PRIORITY = %v", f.Priority)
-		}
-	}
-
-	return nil
-}

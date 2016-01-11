@@ -14,19 +14,44 @@ type Reader struct {
 	results chan *go2apns.Notification
 }
 
+// result is json
+// { "error":0 }
+// { "error":1, "msg":"wrong bundle id" }
+func writeRes(failed bool, msg string, w http.ResponseWriter) {
+	if failed {
+		fmt.Fprintf(w, "{\"error\":1,\"msg\":\"%s\"}", msg)
+	} else {
+		fmt.Fprintf(w, "{\"error\":0},\"msg\":\"%s\"}", msg)
+	}
+}
+
 func handler(
 	w http.ResponseWriter,
 	r *http.Request,
 	reqs chan *go2apns.Notification) {
 	//fmt.Fprintf(w, "hello %s", r.URL.Path[1:])
 	log.Printf("Got one req:%s", r.URL.Path)
-	res := make(chan string)
-	reqs <- &go2apns.Notification{
-		Alert:  "hehe",
-		Result: res,
+
+	no := go2apns.Notification{}
+
+	if r.Method != "POST" {
+		writeRes(true, "Only accept POST!", w)
+		return
 	}
 
-	fmt.Fprintf(w, <-res)
+	no.Token = r.PostFormValue("token")
+	no.Expiration = r.PostFormValue("expiration")
+	no.Priority = r.PostFormValue("priority")
+	no.Topic = r.PostFormValue("topic")
+	no.Payload = r.PostFormValue("payload")
+
+	log.Printf("Got post data: %v", no)
+
+	resc := make(chan string)
+	no.Result = resc
+	reqs <- &no
+	writeRes(false, <-resc, w)
+	//writeRes(false, no.Payload, w)
 }
 
 func makeHandler(fn func(http.ResponseWriter, *http.Request, chan *go2apns.Notification), results chan *go2apns.Notification) http.HandlerFunc {
