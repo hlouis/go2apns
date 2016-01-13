@@ -57,6 +57,7 @@ func (srv *server) doPush(req *go2apns.Notification) {
 			return
 		case <-timeout:
 			req.Result <- "timeout"
+			srv.writer.Reconnect()
 			return
 		}
 	}()

@@ -123,6 +123,13 @@ func (w *Writer) Write(n *go2apns.Notification, out chan string) error {
 	return nil
 }
 
+func (w *Writer) Reconnect() {
+	if w.conn != nil {
+		w.conn.close()
+		w.conn = nil
+	}
+}
+
 // // ////////////////////
 //   Helper functions  //
 // //////////////////////
