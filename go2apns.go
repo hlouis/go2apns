@@ -11,5 +11,10 @@ type Notification struct {
 	Topic      string // bundle id like com.xxx.app.haha
 	Payload    string // alert text conetent
 
-	Result chan string // push result channel
+	Result chan NotiResult // push result channel
+}
+
+type NotiResult struct {
+	Code int    // status code for push result
+	Msg  string // message if any error occured
 }

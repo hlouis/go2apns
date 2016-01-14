@@ -17,12 +17,9 @@ type Reader struct {
 // result is json
 // { "error":0 }
 // { "error":1, "msg":"wrong bundle id" }
-func writeRes(failed bool, msg string, w http.ResponseWriter) {
-	if failed {
-		fmt.Fprintf(w, "{\"error\":1,\"msg\":\"%s\"}", msg)
-	} else {
-		fmt.Fprintf(w, "{\"error\":0},\"msg\":\"%s\"}", msg)
-	}
+func writeRes(status int, msg string, w http.ResponseWriter) {
+	w.WriteHeader(status)
+	fmt.Fprint(w, msg)
 }
 
 func handler(
@@ -35,7 +32,7 @@ func handler(
 	no := go2apns.Notification{}
 
 	if r.Method != "POST" {
-		writeRes(true, "Only accept POST!", w)
+		writeRes(400, `{"reason":"OnlyAcceptPOST"}`, w)
 		return
 	}
 
@@ -47,10 +44,11 @@ func handler(
 
 	log.Printf("Got post data: %v", no)
 
-	resc := make(chan string)
+	resc := make(chan go2apns.NotiResult)
 	no.Result = resc
 	reqs <- &no
-	writeRes(false, <-resc, w)
+	nr := <-resc
+	writeRes(nr.Code, nr.Msg, w)
 	//writeRes(false, no.Payload, w)
 }
 

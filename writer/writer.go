@@ -45,13 +45,13 @@ type Writer struct {
 
 type pushResult struct {
 	StreamID uint32
-	Status   string
+	Status   int
 	Msg      string
 }
 
 type monitor struct {
 	StreamID uint32
-	out      chan string
+	out      chan go2apns.NotiResult
 }
 
 func watch(prs <-chan pushResult, monitors <-chan monitor) {
@@ -62,7 +62,7 @@ func watch(prs <-chan pushResult, monitors <-chan monitor) {
 			select {
 			case pr := <-prs:
 				m := cbs[pr.StreamID]
-				m.out <- pr.Msg
+				m.out <- go2apns.NotiResult{pr.Status, pr.Msg}
 			case m := <-monitors:
 				cbs[m.StreamID] = m
 			}
@@ -71,7 +71,7 @@ func watch(prs <-chan pushResult, monitors <-chan monitor) {
 }
 
 // Write push notification to APNS
-func (w *Writer) Write(n *go2apns.Notification, out chan string) error {
+func (w *Writer) Write(n *go2apns.Notification, out chan go2apns.NotiResult) error {
 	if w.conn == nil {
 		con, err := connect(hosts[w.ApnsEnv], "test/push.crt.pem", "test/push.key.pem")
 		if err != nil {
@@ -166,8 +166,9 @@ func (w *Writer) readFrame() error {
 	case *http2.DataFrame:
 		log.Printf("  %q", f.Data())
 		if f.StreamEnded() {
+			code, _ := strconv.Atoi(w.lastHeader[":status"])
 			w.pushResults <- pushResult{
-				f.StreamID, w.lastHeader[":status"], string(f.Data()),
+				f.StreamID, code, string(f.Data()),
 			}
 		}
 	case *http2.HeadersFrame:
@@ -184,8 +185,9 @@ func (w *Writer) readFrame() error {
 		}
 		w.hdec.Write(f.HeaderBlockFragment())
 		if w.lastHeader[":status"] == "200" && f.StreamEnded() {
+			code, _ := strconv.Atoi(w.lastHeader[":status"])
 			w.pushResults <- pushResult{
-				f.StreamID, w.lastHeader[":status"], "success",
+				f.StreamID, code, "",
 			}
 		}
 	}

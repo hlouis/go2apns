@@ -45,7 +45,7 @@ func (srv *server) init(args []string) {
 }
 
 func (srv *server) doPush(req *go2apns.Notification) {
-	out := make(chan string)
+	out := make(chan go2apns.NotiResult)
 	srv.writer.Write(req, out)
 	// TODO: use some constant to define the timeout time
 	timeout := time.After(5 * time.Second)
@@ -56,7 +56,7 @@ func (srv *server) doPush(req *go2apns.Notification) {
 			req.Result <- result
 			return
 		case <-timeout:
-			req.Result <- "timeout"
+			req.Result <- go2apns.NotiResult{500, `{"reason":"Timeout"}`}
 			srv.writer.Reconnect()
 			return
 		}
